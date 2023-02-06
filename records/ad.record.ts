@@ -36,6 +36,10 @@ export class AdRecord implements AdEntity {
             throw new ValidationError('Nie można zlokalizować ogłoszenia.');
         }
 
+        if (!this.isLatitude(obj.lat) || !this.isLongitude(obj.lon)) {
+            throw new ValidationError('Podano niepoprawne koordynaty.');
+        }
+
         this.name = obj.name;
         this.description = obj.description;
         this.url = obj.url;
@@ -44,4 +48,11 @@ export class AdRecord implements AdEntity {
         this.lon = obj.lon;
     }
 
+    isLatitude(num: number): boolean {
+        return isFinite(num) && Math.abs(num) <= 90
+    }
+
+    isLongitude(num: number) {
+        return isFinite(num) && Math.abs(num) <= 180;
+    }
 }
