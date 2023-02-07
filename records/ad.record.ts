@@ -1,9 +1,11 @@
-import {AdEntity} from "../types";
+import {AdEntity, NewAdEntity} from "../types";
 import {ValidationError} from "../utils/errors";
+import {pool} from "../utils/db";
+import {FieldPacket} from "mysql2";
 
-interface NewAdEntity extends Omit<AdEntity, 'id'> {
-    id?: string;
-}
+
+
+type AdRecordResults = [AdEntity[], FieldPacket[]]
 
 export class AdRecord implements AdEntity {
     id: string;
@@ -13,7 +15,6 @@ export class AdRecord implements AdEntity {
     url: string;
     lat: number;
     lon: number;
-
     constructor(obj: NewAdEntity) {
         if (!obj.name || obj.name.length > 100) {
             throw new ValidationError('Nazwa ogłoszenia nie może być pusta, ani przekraczać 100 znaków.')
@@ -40,12 +41,20 @@ export class AdRecord implements AdEntity {
             throw new ValidationError('Podano niepoprawne koordynaty.');
         }
 
+        this.id = obj.id;
         this.name = obj.name;
         this.description = obj.description;
         this.url = obj.url;
         this.price = obj.price;
         this.lat = obj.lat;
         this.lon = obj.lon;
+    }
+
+    static async getOne(id: string): Promise<AdRecord | null> {
+        const [results] = await pool.execute("SELECT * FROM `ads` WHERE id = :id", {
+            id,
+        }) as AdRecordResults;
+        return results.length === 0 ? null : new AdRecord(results[0]);
     }
 
     isLatitude(num: number): boolean {
