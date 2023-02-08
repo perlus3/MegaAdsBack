@@ -1,16 +1,24 @@
 import {AdRecord} from "../records/ad.record";
+import {pool} from "../utils/db";
 
-const defaultObj = {
-    name: 'Test Name',
-    description: 'blah',
-    url: 'https://google.com',
-    price: 0,
-    lat: 9,
-    lon: 9,
-}
+let ad: AdRecord;
+
+beforeAll(async () => {
+    ad = new AdRecord({
+        name: 'Test Name',
+        description: 'blah',
+        url: 'https://google.com',
+        price: 0,
+        lat: 9,
+        lon: 9,
+    });
+})
+
+afterAll(async () => {
+    await pool.end();
+})
 
 test('Can build AdRecord', () => {
-   const ad = new AdRecord(defaultObj);
 
    expect(ad.name).toBe('Test Name');
    expect(ad.description).toBe('blah');
@@ -18,14 +26,14 @@ test('Can build AdRecord', () => {
 
 test('Validates invalid name', () => {
     expect(() => new AdRecord({
-        ...defaultObj,
+        ...ad,
         name: '',
     })).toThrow('Nazwa ogłoszenia nie może być pusta, ani przekraczać 100 znaków')
 })
 
 test('Validates invalid description', () => {
     expect(() => new AdRecord({
-        ...defaultObj,
+        ...ad,
         description: 'Należy wspierać harmonijny rozwój działalności gospodarczej w całej Unii oraz ciągły i zrównoważony wzrost poprzez zakończenie tworzenia rynku wewnętrznego, który funkcjonuje właściwie i oferuje warunki podobne do istniejących na rynku krajowym. W celu stworzenia takiego rynku i uczynienia go w większym stopniu rynkiem jednolitym należy znieść nie tylko bariery dla swobodnego przepływu towarów i usług oraz ustanowić przepisy zapewniające, by konkurencja nie była zakłócana, ale dodatkowo należy stworzyć warunki prawne, które pozwolą przedsiębiorstwom na dostosowanie ich działalności produkcyjnej oraz dystrybucyjnej lub świadczenia usług do skali unijnej. W tym celu znaki towarowe pozwalające na odróżnienie towarów i usług przedsiębiorstw w ten sam sposób w całej Unii, bez względu na granice, powinny znaleźć się wśród instrumentów prawnych będących do dyspozycji przedsiębiorstw.\n' +
             '\n' +
             '(4) Dla kontynuowania wymienionych celów Unii wydaje się niezbędne ustanowienie przepisów Unii dla znaków towarowych, na podstawie których przedsiębiorstwa mogą otrzymać w ramach jednolitego postępowania unijne znaki towarowe, którym przyznano jednolitą ochronę i które wywołują jednolite skutki na całym terytorium Unii. Tak wyrażona zasada jednolitego charakteru unijnego znaku towarowego powinna mieć zastosowanie, jeżeli niniejsze rozporządzenie nie stanowi inaczej.\n' +
@@ -56,23 +64,53 @@ test('Validates invalid description', () => {
 
 test('Validates invalid url', () => {
     expect(() => new AdRecord({
-        ...defaultObj,
+        ...ad,
         url: '',
     })).toThrow('Link ogłoszenia nie może być pusty, ani przekraczać 100 znaków')
 })
 
 test('Validates invalid price', () => {
     expect(() => new AdRecord({
-        ...defaultObj,
+        ...ad,
         price: -3,
     })).toThrow('Cena nie możę być mniejsza niż 0 lub większa niż 9 999 999.')
 })
 
 test('Validates invalid co-ordinates', () => {
     expect(() => new AdRecord({
-        ...defaultObj,
+        ...ad,
         lat: 120,
         lon: 200,
     })).toThrow('Podano niepoprawne koordynaty.')
+})
+
+test('Not inserted AdRecord should have no id', async () => {
+
+    expect(ad.id).toBeUndefined();
+})
+
+test('Inserted AdRecord should have an id', async () => {
+
+    await ad.insert();
+
+    expect(ad.id).toBeDefined();
+    expect(ad.id).toMatch(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/);
+})
+
+test('AdRedcord inserted properly', async () => {
+
+    const newAd = new AdRecord({
+        name: 'Mój Test',
+        description: 'blahblahblaaaa',
+        url: 'https://googlemaps.com',
+        price: 10,
+        lat: 2,
+        lon: 2,
+    })
+
+    await newAd.insert();
+
+    expect(newAd).toBeTruthy();
+
 })
 
