@@ -15,6 +15,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
+    // delete przykladowych pozycji w bazie danych za pomoca metody delete :D
     await pool.end();
 })
 
@@ -89,11 +90,12 @@ test('Not inserted AdRecord should have no id', async () => {
     expect(ad.id).toBeUndefined();
 })
 
-test('Inserted AdRecord should have an id', async () => {
+test('Inserted AdRecord should have an id as UUID', async () => {
 
     await ad.insert();
 
     expect(ad.id).toBeDefined();
+    expect(typeof ad.id).toBe('string');
     expect(ad.id).toMatch(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/);
 })
 
@@ -110,6 +112,11 @@ test('AdRedcord inserted properly', async () => {
 
     await newAd.insert();
 
+    const foundAd = await AdRecord.getOne(ad.id);
+
+    expect(foundAd).toBeDefined();
+    expect(foundAd).not.toBeNull();
+    expect(foundAd.id).toBe(ad.id);
     expect(newAd).toBeTruthy();
 
 })
